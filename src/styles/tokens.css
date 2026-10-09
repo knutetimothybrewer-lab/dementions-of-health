@@ -1,0 +1,69 @@
+/*
+ * Design tokens. Derived from the logo reference impressions:
+ *   navy #1F3A63, silver-sage #D8DDD6, white.
+ * Accent (PR / success moments only): amber #FFB020 — the complement of navy,
+ * so it pops on both light and dark navy surfaces, and it is distinct from
+ * "info" blue so celebratory moments never read as a link or a status.
+ * Amber is always used as a FILL with navy text (amber text on white fails AA).
+ * Re-run `npm run palette` after dropping assets/logo.png to compare.
+ */
+:root {
+  color-scheme: light;
+  --navy-950: #0b1730;
+  --navy-900: #0f1e36;
+  --navy-800: #112244;
+  --navy-700: #17305a;
+  --navy-600: #1f3a63;
+  --silver-300: #d8ddd6;
+  --silver-100: #f3f5f2;
+
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-2: var(--silver-100);
+  --border: var(--silver-300);
+  --text: var(--navy-900);
+  --text-muted: #4a5a73;
+  --primary: var(--navy-600);
+  --primary-contrast: #ffffff;
+  --primary-text: var(--navy-600);
+  --secondary: var(--silver-300);
+  --secondary-contrast: var(--navy-900);
+  --accent: #ffb020;
+  --accent-contrast: var(--navy-900);
+  --success: #1a7f4b;
+  --warning: #8a5a00;
+  --danger: #b42318;
+  --focus: #2563eb;
+  --stripe-a: var(--navy-600);
+  --stripe-b: var(--silver-300);
+  --shadow: 0 1px 2px rgb(15 30 54 / 0.08), 0 4px 16px rgb(15 30 54 / 0.08);
+
+  --radius: 14px;
+  --tap: 48px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: var(--navy-950);
+  --surface: var(--navy-800);
+  --surface-2: var(--navy-700);
+  --border: #2a4474;
+  --text: #eef1f6;
+  --text-muted: #a9b6cc;
+  --primary: var(--silver-300);
+  --primary-contrast: var(--navy-900);
+  --primary-text: #bcd0f0;
+  --secondary: var(--navy-700);
+  --secondary-contrast: #eef1f6;
+  --success: #4cc38a;
+  --warning: #f0b45a;
+  --danger: #ff8a7a;
+  --focus: #8ab4ff;
+  --stripe-a: var(--silver-300);
+  --stripe-b: #3b5b92;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 16px rgb(0 0 0 / 0.35);
+}

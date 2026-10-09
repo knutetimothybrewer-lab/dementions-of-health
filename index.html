@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#1F3A63" />
+    <meta name="description" content="Top Tier Physical Therapy strength and conditioning tracker." />
+    <title>Top Tier S&amp;C</title>
+    <script>
+      // Resolve theme/motion before first paint to avoid a flash.
+      try {
+        var t = localStorage.getItem('tt-theme') || 'system';
+        var dark = t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+        var m = localStorage.getItem('tt-motion');
+        if (m === 'reduce') document.documentElement.dataset.motion = 'reduce';
+      } catch (e) {
+        document.documentElement.dataset.theme = 'light';
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
