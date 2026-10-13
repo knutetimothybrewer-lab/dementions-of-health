@@ -10,31 +10,31 @@ interface Props {
   className?: string
 }
 
-// Wing bars: [y, length]. Lengths taper to give the "winged stripe" silhouette.
+// Wing bars hug the kettlebell: [y, length]. Lengths taper outward-in for the winged silhouette.
 const WING: ReadonlyArray<readonly [number, number]> = [
-  [14, 70],
-  [24, 56],
-  [34, 42],
+  [20, 96],
+  [31, 76],
+  [42, 56],
 ]
+const BELL_GAP = 14 // distance from the bell's centre line to the inner end of each wing
+const BAR_H = 7
+const SLANT = 6 // italic lean, matching the wordmark
 
 function Wing({ side, animated, reduced }: { side: 'left' | 'right'; animated: boolean; reduced: boolean }) {
   return (
     <g>
       {WING.map(([y, len], i) => {
-        const x = side === 'left' ? 118 - len : 282
+        // Inner edge sits next to the bell; the wing extends outward from it.
+        const inner = side === 'left' ? 200 - BELL_GAP - 8 : 200 + BELL_GAP + 8
+        const outer = side === 'left' ? inner - len : inner + len
+        const [x1, x2] = outer < inner ? [outer, inner] : [inner, outer]
+        const points = `${x1 + SLANT},${y} ${x2 + SLANT},${y} ${x2},${y + BAR_H} ${x1},${y + BAR_H}`
         return (
-          <motion.rect
+          <motion.polygon
             key={y}
-            x={x}
-            y={y}
-            width={len}
-            height={6}
+            points={points}
             fill={i === 0 ? 'var(--stripe-a)' : 'var(--stripe-b)'}
-            style={{
-              skewX: -18,
-              transformOrigin: side === 'left' ? 'right center' : 'left center',
-              transformBox: 'fill-box',
-            }}
+            style={{ transformOrigin: side === 'left' ? 'right center' : 'left center', transformBox: 'fill-box' }}
             initial={animated ? (reduced ? { opacity: 0 } : { scaleX: 0, opacity: 0 }) : false}
             animate={{ scaleX: 1, opacity: 1 }}
             transition={{ delay: 0.15 + i * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
@@ -45,11 +45,29 @@ function Wing({ side, animated, reduced }: { side: 'left' | 'right'; animated: b
   )
 }
 
+/** Smooth kettlebell: stroked handle arch + round body, centred on x=200. */
+function Kettlebell() {
+  return (
+    <g fill="var(--stripe-a)">
+      <path
+        d="M191 26 V19 a9 9 0 0 1 18 0 V26"
+        fill="none"
+        stroke="var(--stripe-a)"
+        strokeWidth={5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="200" cy="38" r="15" />
+      <rect x="190" y="49" width="20" height="4" rx="2" />
+    </g>
+  )
+}
+
 /** Inline SVG placeholder wordmark: "TOP TIER · Physical Therapy" with kettlebell and winged stripes. */
 function PlaceholderMark({ height, animated, reduced }: { height: number; animated: boolean; reduced: boolean }) {
   return (
     <svg
-      viewBox="0 0 400 96"
+      viewBox="0 0 400 100"
       height={height}
       role="img"
       aria-label="Top Tier Physical Therapy"
@@ -57,11 +75,7 @@ function PlaceholderMark({ height, animated, reduced }: { height: number; animat
     >
       <Wing side="left" animated={animated} reduced={reduced} />
       <Wing side="right" animated={animated} reduced={reduced} />
-      {/* Kettlebell */}
-      <g fill="var(--stripe-a)" transform="translate(0 -5)">
-        <path d="M184 30c0-9 7-15 16-15s16 6 16 15v3h-6v-3c0-5-4-9-10-9s-10 4-10 9v3h-6z" />
-        <circle cx="200" cy="40" r="13" />
-      </g>
+      <Kettlebell />
       <motion.g
         initial={animated ? { opacity: 0, y: reduced ? 0 : 8 } : false}
         animate={{ opacity: 1, y: 0 }}
@@ -69,12 +83,12 @@ function PlaceholderMark({ height, animated, reduced }: { height: number; animat
       >
         <text
           x="200"
-          y="78"
+          y="84"
           textAnchor="middle"
           fontFamily="'Barlow Condensed','Arial Narrow',sans-serif"
           fontWeight={800}
           fontStyle="italic"
-          fontSize="40"
+          fontSize="34"
           letterSpacing="2"
           fill="var(--stripe-a)"
         >
@@ -82,12 +96,12 @@ function PlaceholderMark({ height, animated, reduced }: { height: number; animat
         </text>
         <text
           x="200"
-          y="94"
+          y="98"
           textAnchor="middle"
           fontFamily="'Barlow Condensed','Arial Narrow',sans-serif"
           fontWeight={700}
           fontStyle="italic"
-          fontSize="12"
+          fontSize="11"
           letterSpacing="4"
           fill="var(--text-muted)"
         >
