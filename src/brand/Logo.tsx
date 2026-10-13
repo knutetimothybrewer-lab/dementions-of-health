@@ -25,7 +25,9 @@ function Wing({ side, animated, reduced }: { side: 'left' | 'right'; animated: b
     <g>
       {WING.map(([y, len], i) => {
         // Inner edge sits next to the bell; the wing extends outward from it.
-        const inner = side === 'left' ? 200 - BELL_GAP - 8 : 200 + BELL_GAP + 8
+        // The lean shifts each bar right by SLANT/2 at mid-height; subtract it so the gap centres on the bell.
+        const centre = 200 - SLANT / 2
+        const inner = side === 'left' ? centre - BELL_GAP - 8 : centre + BELL_GAP + 8
         const outer = side === 'left' ? inner - len : inner + len
         const [x1, x2] = outer < inner ? [outer, inner] : [inner, outer]
         const points = `${x1 + SLANT},${y} ${x2 + SLANT},${y} ${x2},${y + BAR_H} ${x1},${y + BAR_H}`
