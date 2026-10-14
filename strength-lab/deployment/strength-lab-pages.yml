@@ -3,9 +3,9 @@ on:
   workflow_dispatch:
   push:
     branches: [codex/strength-lab]
-    paths: ['strength-lab/**', '.github/workflows/strength-lab-pages.yml']
+    paths: ["strength-lab/**", ".github/workflows/strength-lab-pages.yml"]
   pull_request:
-    paths: ['strength-lab/**', '.github/workflows/strength-lab-pages.yml']
+    paths: ["strength-lab/**", ".github/workflows/strength-lab-pages.yml"]
 permissions:
   contents: read
 concurrency:

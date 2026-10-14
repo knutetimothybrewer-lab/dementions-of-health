@@ -1,39 +1,244 @@
-import {test,expect} from '@playwright/test';
-async function startPersonal(page:import('@playwright/test').Page){await page.goto('/');await page.getByRole('button',{name:'Start my training history'}).click();await expect(page.getByRole('heading',{name:'Performance overview'})).toBeVisible();}
-test('demo is isolated, and personal quick density persists offline',async({page,context})=>{
- const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await startPersonal(page);
- await page.getByRole('button',{name:'Log workout',exact:true}).click();await page.getByLabel('External load (lb)').fill('185');await page.getByLabel('Total repetitions').fill('60');await page.getByRole('button',{name:'Save workout',exact:true}).click();await expect(page.getByRole('heading',{name:'Training history'})).toBeVisible();await expect(page.getByRole('table')).toContainText('11,100');
- await page.reload();await expect(page.getByRole('table')).toContainText('11,100');await page.getByRole('link',{name:'Density Lab',exact:false}).click();await expect(page.locator('.metric').filter({hasText:'Repetition rate'}).getByText(/4.00/)).toBeVisible();
- await page.waitForFunction(()=>navigator.serviceWorker.controller!==null);await context.setOffline(true);await page.reload();await expect(page.getByRole('heading',{name:'Density Lab'})).toBeVisible();await expect(page.locator('.metric').filter({hasText:'Repetition rate'}).getByText(/4.00/)).toBeVisible();await context.setOffline(false);expect(errors).toEqual([]);
+import { test, expect } from "@playwright/test";
+async function startPersonal(page: import("@playwright/test").Page) {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Start my training history" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Performance overview" }),
+  ).toBeVisible();
+}
+test("demo is isolated, and personal quick density persists offline", async ({
+  page,
+  context,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await startPersonal(page);
+  await page.getByRole("button", { name: "Log workout", exact: true }).click();
+  await page.getByLabel("External load (lb)").fill("185");
+  await page.getByLabel("Total repetitions").fill("60");
+  await page.getByRole("button", { name: "Save workout", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Training history" }),
+  ).toBeVisible();
+  await expect(page.getByRole("table")).toContainText("11,100");
+  await page.reload();
+  await expect(page.getByRole("table")).toContainText("11,100");
+  await page.getByRole("link", { name: "Density Lab", exact: false }).click();
+  await expect(
+    page
+      .locator(".metric")
+      .filter({ hasText: "Repetition rate" })
+      .getByText(/4.00/),
+  ).toBeVisible();
+  await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
+  await context.setOffline(true);
+  await page.reload();
+  await expect(
+    page.getByRole("heading", { name: "Density Lab" }),
+  ).toBeVisible();
+  await expect(
+    page
+      .locator(".metric")
+      .filter({ hasText: "Repetition rate" })
+      .getByText(/4.00/),
+  ).toBeVisible();
+  await context.setOffline(false);
+  expect(errors).toEqual([]);
 });
-test('edit, unit switching, backup restore and deletion are coherent',async({page})=>{
- await startPersonal(page);await page.goto('/#/log');await page.getByLabel('External load (lb)').fill('185');await page.getByLabel('Total repetitions').fill('60');await page.getByRole('button',{name:'Save workout',exact:true}).click();await page.getByRole('button',{name:/Edit Barbell bench/}).click();await page.getByLabel('Total repetitions').fill('70');await page.getByRole('button',{name:'Save changes'}).click();await expect(page.getByRole('table')).toContainText('12,950');
- await page.getByRole('button',{name:'Change display units'}).click();await expect(page.getByRole('table')).toContainText('5,874');await page.goto('/#/settings');const dl=page.waitForEvent('download');await page.getByRole('button',{name:'Download full backup'}).click();const download=await dl;const path=await download.path();expect(path).not.toBeNull();
- await page.goto('/#/history');page.once('dialog',d=>d.accept());await page.getByRole('button',{name:/Delete Barbell bench/}).click();await expect(page.getByRole('heading',{name:'No observations yet'})).toBeVisible();await page.goto('/#/settings');await page.locator('input[type=file]').setInputFiles(path!);await expect(page.getByRole('heading',{name:'Validated backup preview'})).toBeVisible();await page.getByRole('button',{name:'Restore validated data'}).click();await page.goto('/#/history');await expect(page.getByRole('table')).toContainText('5,874');
+test("edit, unit switching, backup restore and deletion are coherent", async ({
+  page,
+}) => {
+  await startPersonal(page);
+  await page.goto("/#/log");
+  await page.getByLabel("External load (lb)").fill("185");
+  await page.getByLabel("Total repetitions").fill("60");
+  await page.getByRole("button", { name: "Save workout", exact: true }).click();
+  await page.getByRole("button", { name: /Edit Barbell bench/ }).click();
+  await page.getByLabel("Total repetitions").fill("70");
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect(page.getByRole("table")).toContainText("12,950");
+  await page.getByRole("button", { name: "Change display units" }).click();
+  await expect(page.getByRole("table")).toContainText("5,874");
+  await page.goto("/#/settings");
+  const dl = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download full backup" }).click();
+  const download = await dl;
+  const path = await download.path();
+  expect(path).not.toBeNull();
+  await page.goto("/#/history");
+  page.once("dialog", (d) => d.accept());
+  await page.getByRole("button", { name: /Delete Barbell bench/ }).click();
+  await expect(
+    page.getByRole("heading", { name: "No observations yet" }),
+  ).toBeVisible();
+  await page.goto("/#/settings");
+  await page.locator("input[type=file]").setInputFiles(path!);
+  await expect(
+    page.getByRole("heading", { name: "Validated backup preview" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Restore validated data" }).click();
+  await page.goto("/#/history");
+  await expect(page.getByRole("table")).toContainText("5,874");
 });
-test('draft survives navigation and unit changes',async({page})=>{
- await startPersonal(page);await page.goto('/#/log');await page.getByLabel('External load (lb)').fill('185');await page.getByLabel('Total repetitions').fill('60');await expect(page.getByText('Draft saved on this device')).toBeVisible();await page.goto('/#/settings');await page.getByRole('combobox',{name:/^Display units/}).selectOption('kg');await page.goto('/#/log');await expect.poll(async()=>Number(await page.getByLabel('External load (kg)').inputValue())).toBeCloseTo(83.91458845,8);await expect(page.getByLabel('Total repetitions')).toHaveValue('60');
+test("draft survives navigation and unit changes", async ({ page }) => {
+  await startPersonal(page);
+  await page.goto("/#/log");
+  await page.getByLabel("External load (lb)").fill("185");
+  await page.getByLabel("Total repetitions").fill("60");
+  await expect(page.getByText("Draft saved on this device")).toBeVisible();
+  await page.goto("/#/settings");
+  await page
+    .getByRole("combobox", { name: /^Display units/ })
+    .selectOption("kg");
+  await page.goto("/#/log");
+  await expect
+    .poll(async () =>
+      Number(await page.getByLabel("External load (kg)").inputValue()),
+    )
+    .toBeCloseTo(83.91458845, 8);
+  await expect(page.getByLabel("Total repetitions")).toHaveValue("60");
 });
-test('all analysis destinations render without browser errors',async({page})=>{
- const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/');for(const route of ['dashboard','density','strength','profiles','conditioning','cycles','biomechanics','research','records','settings']){await page.goto('/#/'+route);await expect(page.locator('main h1')).toBeVisible();await page.waitForTimeout(300);}expect(errors).toEqual([]);
+test("all analysis destinations render without browser errors", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.goto("/");
+  for (const route of [
+    "dashboard",
+    "density",
+    "strength",
+    "profiles",
+    "conditioning",
+    "cycles",
+    "biomechanics",
+    "research",
+    "records",
+    "settings",
+  ]) {
+    await page.goto("/#/" + route);
+    await expect(page.locator("main h1")).toBeVisible();
+    await page.waitForTimeout(300);
+  }
+  expect(errors).toEqual([]);
 });
-test('mobile layout has no horizontal page overflow',async({page})=>{
- await page.setViewportSize({width:390,height:844});await page.goto('/');await expect(page.getByRole('navigation',{name:'Mobile navigation'})).toBeVisible();await expect(page.locator('main h1')).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);await page.screenshot({path:'test-results/strength-lab-mobile.png',fullPage:true});
+test("mobile layout has no horizontal page overflow", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await expect(
+    page.getByRole("navigation", { name: "Mobile navigation" }),
+  ).toBeVisible();
+  await expect(page.locator("main h1")).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({
+    path: "test-results/strength-lab-mobile.png",
+    fullPage: true,
+  });
 });
-test('captures desktop dashboard',async({page})=>{await page.setViewportSize({width:1440,height:1100});await page.goto('/');await expect(page.locator('main h1')).toBeVisible();await page.waitForTimeout(1800);await page.screenshot({path:'test-results/strength-lab-dashboard.png',fullPage:true});});
-test('detailed individual sets enable strength estimates and append safely',async({page})=>{
- await startPersonal(page);await page.goto('/#/log');await page.getByLabel('Training modality').selectOption('Straight sets');await page.getByLabel('Set 1 lb',{exact:true}).fill('185');await page.getByLabel('Set 1 Reps',{exact:true}).fill('5');await page.getByLabel('Set 1 RIR',{exact:true}).fill('1');await page.getByRole('button',{name:'Save workout',exact:true}).click();await expect(page.getByRole('table')).toContainText('925');await page.goto('/#/strength');await expect(page.locator('.metric').filter({hasText:'Latest estimated 1RM'})).toContainText('215.8');
- await page.goto('/#/history');await page.getByRole('button',{name:'Barbell bench press / Straight sets',exact:true}).click();await page.getByRole('button',{name:'Add exercise',exact:true}).click();await page.getByLabel('Exercise variation').selectOption('squat');await page.getByLabel('External load (lb)').fill('225');await page.getByLabel('Total repetitions').fill('20');await page.getByRole('button',{name:'Save changes'}).click();await expect(page.getByRole('table')).toContainText('5,425');
+test("captures desktop dashboard", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1100 });
+  await page.goto("/");
+  await expect(page.locator("main h1")).toBeVisible();
+  await page.waitForTimeout(1800);
+  await page.screenshot({
+    path: "test-results/strength-lab-dashboard.png",
+    fullPage: true,
+  });
 });
-test('cycle planning and explicit completion links work',async({page})=>{
- await startPersonal(page);await page.goto('/#/cycles');await page.getByRole('button',{name:'New cycle'}).click();await page.getByLabel('Name',{exact:true}).fill('Test block');await page.getByLabel('Primary goal').fill('Task capacity');await page.getByLabel('End date').fill('2027-01-01');await page.getByRole('button',{name:'Create cycle'}).click();await expect(page.getByRole('combobox',{name:'Active training cycle'})).toContainText('Test block');await page.getByRole('button',{name:'Add target'}).click();await expect(page.getByRole('table')).toContainText('185 lb');await expect(page.locator('.metric').filter({hasText:'Due-slot adherence'})).toContainText('0');
+test("detailed individual sets enable strength estimates and append safely", async ({
+  page,
+}) => {
+  await startPersonal(page);
+  await page.goto("/#/log");
+  await page.getByLabel("Training modality").selectOption("Straight sets");
+  await page.getByLabel("Set 1 lb", { exact: true }).fill("185");
+  await page.getByLabel("Set 1 Reps", { exact: true }).fill("5");
+  await page.getByLabel("Set 1 RIR", { exact: true }).fill("1");
+  await page.getByRole("button", { name: "Save workout", exact: true }).click();
+  await expect(page.getByRole("table")).toContainText("925");
+  await page.goto("/#/strength");
+  await expect(
+    page.locator(".metric").filter({ hasText: "Latest estimated 1RM" }),
+  ).toContainText("215.8");
+  await page.goto("/#/history");
+  await page
+    .getByRole("button", {
+      name: "Barbell bench press / Straight sets",
+      exact: true,
+    })
+    .click();
+  await page.getByRole("button", { name: "Add exercise", exact: true }).click();
+  await page.getByLabel("Exercise variation").selectOption("squat");
+  await page.getByLabel("External load (lb)").fill("225");
+  await page.getByLabel("Total repetitions").fill("20");
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect(page.getByRole("table")).toContainText("5,425");
 });
-test('unsupported biomechanics are unavailable and methodology traps focus',async({page})=>{
- await page.goto('/#/biomechanics');await page.getByLabel('External mass (lb)').fill('220.46226218487757');await page.getByLabel('Vertical ascent per rep (m)').fill('0.5');await page.getByLabel('Concentric time per rep (s)').fill('1');await page.getByLabel('Session elapsed time (min)').fill('15');await expect(page.locator('.physics-results')).toContainText('490.33');await page.getByLabel('Movement model').selectOption('machine');await expect(page.getByRole('heading',{name:'Appropriate model required'})).toBeVisible();await page.getByRole('button',{name:'Methodology'}).click();await expect(page.getByRole('dialog')).toBeVisible();await page.keyboard.press('Escape');await expect(page.getByRole('dialog')).not.toBeVisible();
+test("cycle planning and explicit completion links work", async ({ page }) => {
+  await startPersonal(page);
+  await page.goto("/#/cycles");
+  await page.getByRole("button", { name: "New cycle" }).click();
+  await page.getByLabel("Name", { exact: true }).fill("Test block");
+  await page.getByLabel("Primary goal").fill("Task capacity");
+  await page.getByLabel("End date").fill("2027-01-01");
+  await page.getByRole("button", { name: "Create cycle" }).click();
+  await expect(
+    page.getByRole("combobox", { name: "Active training cycle" }),
+  ).toContainText("Test block");
+  await page.getByRole("button", { name: "Add target" }).click();
+  await expect(page.getByRole("table")).toContainText("185 lb");
+  await expect(
+    page.locator(".metric").filter({ hasText: "Due-slot adherence" }),
+  ).toContainText("0");
 });
-test('navigation immediately after typing preserves the last input',async({page})=>{
- await startPersonal(page);await page.goto('/#/log');await page.getByLabel('External load (lb)').fill('205');await page.getByLabel('Total repetitions').fill('37');await page.getByRole('link',{name:'Overview',exact:true}).click();await page.goto('/#/log');await expect(page.getByLabel('Total repetitions')).toHaveValue('37');await expect(page.getByLabel('External load (lb)')).toHaveValue('205');
+test("unsupported biomechanics are unavailable and methodology traps focus", async ({
+  page,
+}) => {
+  await page.goto("/#/biomechanics");
+  await page.getByLabel("External mass (lb)").fill("220.46226218487757");
+  await page.getByLabel("Vertical ascent per rep (m)").fill("0.5");
+  await page.getByLabel("Concentric time per rep (s)").fill("1");
+  await page.getByLabel("Session elapsed time (min)").fill("15");
+  await expect(page.locator(".physics-results")).toContainText("490.33");
+  await page.getByLabel("Movement model").selectOption("machine");
+  await expect(
+    page.getByRole("heading", { name: "Appropriate model required" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Methodology" }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).not.toBeVisible();
 });
-test('wellness and subjective workload trends use recorded inputs',async({page})=>{
- await page.goto('/');await page.getByRole('button',{name:'View wellness and training-load trends'}).click();await expect(page.getByRole('heading',{name:'Subjective wellness',exact:true})).toBeVisible();await expect(page.getByRole('heading',{name:'Session-RPE load',exact:true})).toBeVisible();await expect(page.getByRole('img',{name:/Session RPE load/})).toBeVisible();
+test("navigation immediately after typing preserves the last input", async ({
+  page,
+}) => {
+  await startPersonal(page);
+  await page.goto("/#/log");
+  await page.getByLabel("External load (lb)").fill("205");
+  await page.getByLabel("Total repetitions").fill("37");
+  await page.getByRole("link", { name: "Overview", exact: true }).click();
+  await page.goto("/#/log");
+  await expect(page.getByLabel("Total repetitions")).toHaveValue("37");
+  await expect(page.getByLabel("External load (lb)")).toHaveValue("205");
+});
+test("wellness and subjective workload trends use recorded inputs", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page
+    .getByRole("button", { name: "View wellness and training-load trends" })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Subjective wellness", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Session-RPE load", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("img", { name: /Session RPE load/ }),
+  ).toBeVisible();
 });

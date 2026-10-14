@@ -2,6 +2,8 @@
 
 **Performance. Measured.** A local-first, installable strength and conditioning PWA. This is a standalone application under `strength-lab/` in the `dementions-of-health` repository; the existing Top Tier application remains intact.
 
+![Strength Lab desktop dashboard — isolated sample observations](docs/dashboard.png)
+
 ## Run
 
 Node 22+ recommended.
