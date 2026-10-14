@@ -25,6 +25,7 @@ Browser tests use system Chromium when `/usr/bin/chromium` exists; elsewhere run
 ## Features
 
 - Twelve desktop destinations and mobile navigation; dark/light themes; SI persistence with lb/kg presentation.
+- Shared exercise, cycle, date-range, density protocol and strength-formula selection across analytics, with a visible scope summary and reload persistence. Historical date ranges drive overview period totals. Exercise edits update their protocol and auto-generated session labels together.
 - Quick 15-minute density entry; detailed sets, grouped supersets/clusters/circuits, isometric hold duration, effort, timestamps and movement observations.
 - Multiple exercise observations per session; persistent drafts, editing and confirmed deletion.
 - Strict fixed-load/window comparisons; separate variable-load/time views; rolling means, accumulation data only when recorded.

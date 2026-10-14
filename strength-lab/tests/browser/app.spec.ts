@@ -242,3 +242,119 @@ test("wellness and subjective workload trends use recorded inputs", async ({
     page.getByRole("img", { name: /Session RPE load/ }),
   ).toBeVisible();
 });
+
+test("changing bench press to back squat updates history and every resistance analysis", async ({
+  page,
+}) => {
+  await startPersonal(page);
+  await page.goto("/#/log");
+  await page.getByLabel("External load (lb)").fill("185");
+  await page.getByLabel("Total repetitions").fill("60");
+  await page.getByRole("button", { name: "Save workout", exact: true }).click();
+  await page.getByRole("button", { name: /Edit Barbell bench/ }).click();
+  await page.getByLabel("Exercise variation").selectOption("squat");
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect(page.getByRole("table")).toContainText("Back squat / Density");
+  await expect(page.getByRole("table")).not.toContainText(
+    "Barbell bench press",
+  );
+  await page.goto("/#/density");
+  await expect(
+    page.getByRole("combobox", { name: /Comparable protocol/ }),
+  ).toContainText("Back squat");
+  await expect(
+    page.locator(".metric").filter({ hasText: "Latest repetitions" }),
+  ).toContainText("60");
+  await page.goto("/#/profiles");
+  await expect(
+    page.getByRole("combobox", { name: "Load profile protocol" }),
+  ).toContainText("Back squat");
+  await page.goto("/#/records");
+  await expect(page.locator(".record-card").first()).toContainText(
+    "Back squat",
+  );
+  await page.reload();
+  await expect(page.locator(".record-card").first()).toContainText(
+    "Back squat",
+  );
+});
+test("density load and exercise selection follows navigation into research and overview", async ({
+  page,
+}) => {
+  await page.goto("/#/density");
+  await page
+    .getByRole("combobox", { name: /Comparable protocol/ })
+    .selectOption({ label: "Barbell bench press · 135 lb · 15 min" });
+  await page
+    .getByRole("link", { name: "Research analytics", exact: true })
+    .click();
+  await expect(
+    page
+      .getByRole("combobox", { name: "Research protocol" })
+      .locator("option:checked"),
+  ).toHaveText("Barbell bench press · 135 lb · 15 min");
+  await expect(page.locator(".metric").first()).toContainText("2");
+  await page.getByRole("link", { name: "Overview", exact: true }).click();
+  await expect(
+    page.locator(".metric").filter({ hasText: "Latest density performance" }),
+  ).toContainText("115");
+  await expect(
+    page.getByRole("region", { name: "Analysis scope" }),
+  ).toContainText("Barbell bench press");
+});
+test("historical date filters drive overview totals and stay visible across tabs", async ({
+  page,
+}) => {
+  await startPersonal(page);
+  await page.goto("/#/log");
+  await page.getByLabel("External load (lb)").fill("185");
+  await page.getByLabel("Total repetitions").fill("60");
+  await page.getByLabel("Date", { exact: true }).fill("2026-01-02");
+  await page.getByRole("button", { name: "Save workout", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Training history", exact: true }),
+  ).toBeVisible();
+  await page.goto("/#/dashboard");
+  await page.getByRole("button", { name: /Filters/ }).click();
+  await page.getByLabel("From", { exact: true }).fill("2026-01-01");
+  await page.getByLabel("Through", { exact: true }).fill("2026-01-31");
+  await expect(page.locator(".section-label")).toContainText("SELECTED PERIOD");
+  await expect(page.locator(".metric").first()).toContainText("11,100");
+  await page.goto("/#/history");
+  await expect(page.getByRole("table")).toContainText("11,100");
+  await expect(
+    page.getByRole("region", { name: "Analysis scope" }),
+  ).toContainText("2026-01-01");
+});
+test("chosen cycle and 1RM equation carry into overview and survive reload", async ({
+  page,
+}) => {
+  await page.goto("/#/cycles");
+  await page
+    .getByRole("combobox", { name: "Active training cycle" })
+    .selectOption("cycle-previous");
+  await page.goto("/#/dashboard");
+  await expect(page.locator(".hero-readout")).toContainText(
+    "Strength / Foundation",
+  );
+  await page.getByRole("button", { name: "Clear selections" }).click();
+  await page.goto("/#/strength");
+  await page
+    .getByRole("combobox", { name: "Strength exercise" })
+    .selectOption("squat");
+  await page
+    .getByRole("combobox", { name: "1RM equation" })
+    .selectOption("Brzycki");
+  await page.goto("/#/dashboard");
+  await expect(
+    page.getByRole("region", { name: "Analysis scope" }),
+  ).toContainText("Brzycki");
+  await expect(page.locator(".strength-readout")).toContainText("315.0");
+  await page.reload();
+  await expect(
+    page.getByRole("region", { name: "Analysis scope" }),
+  ).toContainText("Back squat");
+  await expect(
+    page.getByRole("region", { name: "Analysis scope" }),
+  ).toContainText("Brzycki");
+});

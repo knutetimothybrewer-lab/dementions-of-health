@@ -1,3 +1,4 @@
+import { sessionDisplayName } from "../domain/scope";
 import Dexie, { type Table } from "dexie";
 import {
   type Conditioning,
@@ -135,6 +136,9 @@ export async function saveSession(
         (data[n] as unknown[]) = await db.table(n).toArray();
       databaseSchema.parse(data);
       validateReferences(data);
+      const name = sessionDisplayName(data, bundle.session);
+      if (name !== bundle.session.name)
+        await db.sessions.update(bundle.session.id, { name });
       await db.drafts.delete(draftId);
     },
   );

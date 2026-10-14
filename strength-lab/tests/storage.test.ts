@@ -78,3 +78,29 @@ it("appends an exercise without overwriting existing observations", async () => 
     await db.performances.where("sessionId").equals(d.sessions[0].id).count(),
   ).toBe(2);
 });
+it("reassigns only the edited exercise and persists its new session title", async () => {
+  const d = demoData();
+  await restore(db, d, "replace");
+  const session = { ...d.sessions[0], name: "Barbell bench press / Density" };
+  const original = d.performances[0];
+  const pr = {
+    ...d.protocols[0],
+    id: "squat-density",
+    exerciseId: "squat",
+    standard: d.exercises.find((e) => e.id === "squat")!.standard,
+  };
+  await saveSession(db, {
+    session,
+    protocol: pr,
+    performance: { ...original, protocolId: pr.id },
+    replacePerformanceId: original.id,
+  });
+  expect((await db.sessions.get(session.id))?.name).toBe(
+    "Back squat / Density",
+  );
+  expect((await db.performances.get(original.id))?.protocolId).toBe(pr.id);
+  expect((await db.protocols.get("bench-density"))?.exerciseId).toBe("bench");
+  expect((await db.performances.get(d.performances[2].id))?.protocolId).toBe(
+    d.performances[2].protocolId,
+  );
+});

@@ -1,3 +1,4 @@
+import { emptyFilters, emptyAnalysis } from "../domain/scope";
 import { Download, Plus, ShieldCheck, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { number, useLab } from "../components/context";
@@ -20,7 +21,8 @@ import { fromKg } from "../domain/metrics";
 import { type Dataset, type Exercise, today } from "../domain/model";
 import { WellnessPanel } from "./Labs";
 export function SettingsPage() {
-  const { db, data, settings, demo, setDemo, notify } = useLab();
+  const { db, data, settings, demo, setDemo, notify, setFilters, setAnalysis } =
+    useLab();
   const [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [pending, setPending] = useState<Dataset | null>(null),
@@ -88,6 +90,8 @@ export function SettingsPage() {
         );
       }
       await restore(db, pending, mode);
+      setFilters(emptyFilters());
+      setAnalysis(emptyAnalysis());
       setPending(null);
       notify("Backup restored. Derived analytics recalculated.");
     } catch (e) {

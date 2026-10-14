@@ -1,3 +1,11 @@
+import { points, fixedLoadKey, fromKg } from "./domain/metrics";
+import {
+  emptyFilters,
+  emptyAnalysis,
+  selectedDensityKey,
+  scopeDataset,
+  type AnalysisSelection,
+} from "./domain/scope";
 import { useLiveQuery } from "dexie-react-hooks";
 import {
   Activity,
@@ -116,6 +124,44 @@ export class ErrorBoundary extends Component<
     );
   }
 }
+function readWorkspace() {
+  try {
+    const mode =
+      sessionStorage.getItem("strength-lab-environment") === "personal"
+        ? "personal"
+        : "demo";
+    const raw = JSON.parse(
+      sessionStorage.getItem("strength-lab-scope:" + mode) || "{}",
+    );
+    const filter = emptyFilters();
+    for (const key of [
+      "exercise",
+      "cycle",
+      "from",
+      "to",
+      "modality",
+      "pattern",
+    ] as const) {
+      if (typeof raw.filters?.[key] === "string")
+        filter[key] = raw.filters[key];
+    }
+    return {
+      filters: filter,
+      analysis: {
+        densityKey:
+          typeof raw.analysis?.densityKey === "string"
+            ? raw.analysis.densityKey
+            : "",
+        formula:
+          raw.analysis?.formula === "Brzycki"
+            ? ("Brzycki" as const)
+            : ("Epley" as const),
+      },
+    };
+  } catch {
+    return { filters: emptyFilters(), analysis: emptyAnalysis() };
+  }
+}
 export default function App() {
   const [route, setRoute] = useState(readRoute),
     [demo, setDemoState] = useState(
@@ -126,13 +172,21 @@ export default function App() {
     [menu, setMenu] = useState(false),
     [toast, setToast] = useState(""),
     [online, setOnline] = useState(navigator.onLine),
-    [filters, setFilters] = useState<Filters>({
-      exercise: "",
-      cycle: "",
-      from: "",
-      to: "",
-    }),
-    [showFilters, setShowFilters] = useState(false);
+    [filters, setFilters] = useState<Filters>(() => readWorkspace().filters),
+    [showFilters, setShowFilters] = useState(false),
+    [analysis, setAnalysis] = useState<AnalysisSelection>(
+      () => readWorkspace().analysis,
+    );
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(
+        "strength-lab-scope:" + (demo ? "demo" : "personal"),
+        JSON.stringify({ filters, analysis }),
+      );
+    } catch {
+      /* Preferences remain available in memory if browser storage is unavailable. */
+    }
+  }, [demo, filters, analysis]);
   const db = demo ? demoDB : realDB;
   const ready = readyDb === db;
   const {
@@ -197,6 +251,7 @@ export default function App() {
       value ? "demo" : "personal",
     );
     setFilters({ exercise: "", cycle: "", from: "", to: "" });
+    setAnalysis(emptyAnalysis());
     setDemoState(value);
     setToast(
       value
@@ -276,6 +331,15 @@ export default function App() {
       );
   }
   const filterCount = Object.values(filters).filter(Boolean).length;
+  const scoped = scopeDataset(data, filters);
+  const densitySelection = selectedDensityKey(
+    scoped,
+    analysis.densityKey,
+    filters.exercise,
+  );
+  const densityPoint = points(scoped, undefined, true).find(
+    (p) => fixedLoadKey(p.p, scoped) === densitySelection,
+  );
   return (
     <Context.Provider
       value={{
@@ -288,6 +352,12 @@ export default function App() {
         navigate,
         filters,
         setFilters,
+        analysis,
+        setAnalysis,
+        selectDensity: (key, exercise) => {
+          setAnalysis({ ...analysis, densityKey: key });
+          setFilters({ ...filters, exercise });
+        },
       }}
     >
       <a
@@ -432,6 +502,41 @@ export default function App() {
                 )}
               </div>
             </div>
+            {!["log", "settings", "biomechanics"].includes(page) && (
+              <section
+                className="analysis-scope"
+                role="region"
+                aria-label="Analysis scope"
+              >
+                <span>
+                  <strong>Shared scope</strong> ·{" "}
+                  {data.exercises.find((e) => e.id === filters.exercise)
+                    ?.name || "All exercises"}{" "}
+                  ·{" "}
+                  {data.cycles.find((c) => c.id === filters.cycle)?.name ||
+                    "All cycles"}{" "}
+                  · {filters.from || "Beginning"} to {filters.to || "Latest"}
+                  {filters.modality && ` · ${filters.modality}`}
+                  {filters.pattern && ` · ${filters.pattern}`}
+                  <small>
+                    Density comparison:{" "}
+                    {densityPoint
+                      ? `${densityPoint.e.name} · ${Number(fromKg(densityPoint.p.loadKg!, settings.unit).toFixed(3))} ${settings.unit} · ${densityPoint.p.durationSec / 60} min`
+                      : "No matching recorded protocol"}{" "}
+                    · Strength model: {analysis.formula}
+                  </small>
+                </span>
+                <button
+                  className="text-button"
+                  onClick={() => {
+                    setFilters(emptyFilters());
+                    setAnalysis(emptyAnalysis());
+                  }}
+                >
+                  Clear selections
+                </button>
+              </section>
+            )}
             {showFilters &&
               !["log", "settings", "biomechanics"].includes(page) && (
                 <div className="filter-bar">

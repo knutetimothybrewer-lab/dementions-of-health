@@ -1,3 +1,4 @@
+import { selectedDensityKey, sessionDisplayName } from "../domain/scope";
 import {
   Activity,
   ArrowRight,
@@ -82,24 +83,36 @@ function Insight({ rows }: { rows: ReturnType<typeof points> }) {
   ) : null;
 }
 
+function useDensitySelection() {
+  const { analysis, filters, selectDensity } = useLab();
+  const d = useScope({ exercise: "" });
+  const pts = points(d, undefined, true);
+  const active = selectedDensityKey(d, analysis.densityKey, filters.exercise);
+  const choose = (key: string) => {
+    const pt = pts.find((p) => fixedLoadKey(p.p, d) === key);
+    if (pt) selectDensity(key, pt.e.id);
+  };
+  return { d, pts, active, choose };
+}
+
 export function Dashboard() {
-  const { settings, data, navigate, filters } = useLab(),
+  const { settings, data, navigate, filters, analysis } = useLab(),
     d = useScope(),
     unit = settings.unit;
   const pts = points(d),
     allDensity = points(d, undefined, true),
-    latest = allDensity.at(-1),
-    matched = latest
-      ? allDensity.filter(
-          (x) => fixedLoadKey(x.p, d) === fixedLoadKey(latest.p, d),
-        )
-      : [];
+    densityKey = selectedDensityKey(d, analysis.densityKey, filters.exercise),
+    matched = allDensity.filter((p) => fixedLoadKey(p.p, d) === densityKey),
+    latest = matched.at(-1);
   const currentWeek = weekStart(today(), settings.weekStart === "sunday");
+  const customPeriod = Boolean(filters.from || filters.to);
   const weekPts = pts.filter(
-    (p) => p.session.date >= currentWeek && p.session.date <= today(),
+    (p) =>
+      customPeriod ||
+      (p.session.date >= currentWeek && p.session.date <= today()),
   );
   const weekSessions = d.sessions.filter(
-    (s) => s.date >= currentWeek && s.date <= today(),
+    (s) => customPeriod || (s.date >= currentWeek && s.date <= today()),
   );
   const volume = weekPts.reduce((s, p) => s + (p.volume ?? 0), 0),
     omitted = weekPts.filter((p) => p.volume === null).length;
@@ -111,14 +124,20 @@ export function Dashboard() {
       (p) => p.session.date >= previousWeek && p.session.date < currentWeek,
     )
     .reduce((s, p) => s + (p.volume ?? 0), 0);
-  const pct = change(volume, previousVolume);
-  const currentCycle = data.cycles.find(
-    (c) => today() >= c.start && today() <= c.end,
-  );
+  const pct = customPeriod ? null : change(volume, previousVolume);
+  const currentCycle =
+    data.cycles.find((c) => c.id === filters.cycle) ||
+    data.cycles.find((c) => today() >= c.start && today() <= c.end);
   const weekMap = new Map<string, number>();
   for (let i = 7; i >= 0; i--)
     weekMap.set(
-      new Date((dayNumber(currentWeek) - i * 7) * 86400000)
+      new Date(
+        (dayNumber(
+          weekStart(filters.to || today(), settings.weekStart === "sunday"),
+        ) -
+          i * 7) *
+          86400000,
+      )
         .toISOString()
         .slice(0, 10),
       0,
@@ -129,8 +148,8 @@ export function Dashboard() {
   });
   const strength = strengthObservations(
       d,
-      "Epley",
-      filters.exercise || "squat",
+      analysis.formula,
+      filters.exercise || undefined,
     ),
     lastStrength = strength.at(-1);
   const recent = [...d.sessions]
@@ -173,10 +192,11 @@ export function Dashboard() {
         </div>
       </div>
       <div className="section-label">
-        THIS WEEK{" "}
+        {customPeriod ? "SELECTED PERIOD" : "THIS WEEK"}{" "}
         <span>
-          {dateLabel(currentWeek)} — {dateLabel(today())} · selected filters
-          apply
+          {customPeriod ? filters.from || "Beginning" : dateLabel(currentWeek)}{" "}
+          — {customPeriod ? filters.to || "Latest" : dateLabel(today())} ·
+          selected filters apply
         </span>
       </div>
       <div className="metrics four">
@@ -197,7 +217,7 @@ export function Dashboard() {
           label="Training frequency"
           value={weekSessions.length}
           unit="sessions"
-          detail={`${new Set(weekSessions.map((s) => s.date)).size} training days this week`}
+          detail={`${new Set(weekSessions.map((s) => s.date)).size} training days in this period`}
         />
         <Metric
           label="Latest density performance"
@@ -350,7 +370,7 @@ export function Dashboard() {
                     <CheckCircle2 size={18} />
                   </span>
                   <span>
-                    <strong>{s.name}</strong>
+                    <strong>{sessionDisplayName(data, s)}</strong>
                     <small>
                       {dateLabel(s.date)} · {Math.round(s.durationSec / 60)} min
                     </small>
@@ -373,7 +393,7 @@ export function Dashboard() {
             title="Strength snapshot"
             subtitle={
               lastStrength
-                ? `${lastStrength.pt.e.name} · Epley`
+                ? `${lastStrength.pt.e.name} · ${analysis.formula}`
                 : "Qualifying individual sets"
             }
           />
@@ -405,16 +425,13 @@ export function Dashboard() {
   );
 }
 export function DensityLab() {
-  const { settings } = useLab(),
-    d = useScope();
-  const pts = points(d, undefined, true);
-  const [key, setKey] = useState("");
+  const { settings } = useLab();
+  const { d, pts, active, choose } = useDensitySelection();
   const groups = Array.from(
     new Set(
       pts.filter((x) => x.p.loadKg !== null).map((x) => fixedLoadKey(x.p, d)),
     ),
   );
-  const active = groups.includes(key) ? key : groups.at(-1) || "";
   const rows = pts.filter((x) => fixedLoadKey(x.p, d) === active);
   const first = rows[0],
     last = rows.at(-1);
@@ -425,7 +442,11 @@ export function DensityLab() {
     ? pts.filter((x) => comparisonKey(x.p, d) === comparisonKey(last.p, d))
     : [];
   const chartRows =
-    mode === "fixed" ? rows : mode === "variable-load" ? comparable : pts;
+    mode === "fixed"
+      ? rows
+      : mode === "variable-load"
+        ? comparable
+        : pts.filter((p) => p.e.id === last?.e.id);
   const rr = chartRows.map((x) => ({
     date: x.session.date,
     load: fromKg(x.p.loadKg ?? 0, unit),
@@ -469,7 +490,10 @@ export function DensityLab() {
       <Card className="control-card">
         <label>
           Comparable protocol
-          <select value={active} onChange={(e) => setKey(e.target.value)}>
+          <select value={active} onChange={(e) => choose(e.target.value)}>
+            <option value="" disabled>
+              No matching protocol selected
+            </option>
             {groups.map((g) => {
               const x = pts.find((x) => fixedLoadKey(x.p, d) === g)!;
               return (
@@ -639,24 +663,15 @@ export function DensityLab() {
   );
 }
 export function StrengthAnalytics() {
-  const { settings } = useLab(),
-    d = useScope();
-  const [formula, setFormula] = useState<"Epley" | "Brzycki">("Epley");
-  const [exercise, setExercise] = useState("");
-  const eligibleIds = Array.from(
-    new Set(
-      points(d)
-        .filter((pt) =>
-          d.sets.some(
-            (s) => s.performanceId === pt.p.id && qualifying(s, pt.e),
-          ),
-        )
-        .map((pt) => pt.e.id),
-    ),
-  );
-  const active = eligibleIds.includes(exercise)
-    ? exercise
-    : eligibleIds[0] || "";
+  const { settings, filters, setFilters, analysis, setAnalysis } = useLab();
+  const d = useScope({ exercise: "" });
+  const formula = analysis.formula;
+  const eligibleIds = Array.from(new Set(points(d).map((p) => p.e.id)));
+  const active =
+    filters.exercise ||
+    strengthObservations(d, formula).at(-1)?.pt.e.id ||
+    points(d).at(-1)?.e.id ||
+    "";
   const obs = strengthObservations(d, formula, active);
   const best = obs.length ? Math.max(...obs.map((o) => o.value)) : null;
   const latest = obs.at(-1);
@@ -682,7 +697,9 @@ export function StrengthAnalytics() {
           <select
             aria-label="Strength exercise"
             value={active}
-            onChange={(e) => setExercise(e.target.value)}
+            onChange={(e) =>
+              setFilters({ ...filters, exercise: e.target.value })
+            }
           >
             {eligibleIds.map((id) => (
               <option key={id} value={id}>
@@ -693,7 +710,12 @@ export function StrengthAnalytics() {
           <select
             aria-label="1RM equation"
             value={formula}
-            onChange={(e) => setFormula(e.target.value as "Epley" | "Brzycki")}
+            onChange={(e) =>
+              setAnalysis({
+                ...analysis,
+                formula: e.target.value as "Epley" | "Brzycki",
+              })
+            }
           >
             <option>Epley</option>
             <option>Brzycki</option>
@@ -779,16 +801,15 @@ export function StrengthAnalytics() {
   );
 }
 export function LoadProfiles() {
-  const { settings } = useLab(),
-    d = useScope();
-  const pts = points(d, undefined, true);
-  const [protocolKey, setProtocolKey] = useState(""),
-    [aggregation, setAggregation] = useState("latest"),
+  const { settings, analysis, selectDensity } = useLab();
+  const { d, pts, active: densityKey } = useDensitySelection();
+  const [aggregation, setAggregation] = useState("latest"),
     [profileView, setProfileView] = useState("line"),
     [reference, setReference] = useState(""),
     [zoneMode, setZoneMode] = useState("current");
   const keys = Array.from(new Set(pts.map((x) => comparisonKey(x.p, d))));
-  const active = keys.includes(protocolKey) ? protocolKey : keys.at(-1) || "";
+  const selected = pts.find((x) => fixedLoadKey(x.p, d) === densityKey);
+  const active = selected ? comparisonKey(selected.p, d) : "";
   const matched = pts.filter(
     (x) => comparisonKey(x.p, d) === active && x.p.loadKg !== null,
   );
@@ -819,7 +840,7 @@ export function LoadProfiles() {
       rows.length > 1 ? change(rows.at(-1)!.reps, rows[0].reps) : null;
     return pct === null ? [] : [[i, 0, Number(pct.toFixed(2))]];
   });
-  const refs = strengthObservations(d, "Epley", matched[0]?.e.id),
+  const refs = strengthObservations(d, analysis.formula, matched[0]?.e.id),
     currentRef =
       Number(reference) > 0
         ? toKg(Number(reference), settings.unit)
@@ -856,8 +877,16 @@ export function LoadProfiles() {
           <select
             aria-label="Load profile protocol"
             value={active}
-            onChange={(e) => setProtocolKey(e.target.value)}
+            onChange={(e) => {
+              const pt = pts
+                .filter((x) => comparisonKey(x.p, d) === e.target.value)
+                .at(-1);
+              if (pt) selectDensity(fixedLoadKey(pt.p, d), pt.e.id);
+            }}
           >
+            <option value="" disabled>
+              No matching protocol selected
+            </option>
             {keys.map((k) => {
               const x = pts.find((x) => comparisonKey(x.p, d) === k)!;
               return (
@@ -1034,14 +1063,15 @@ export function LoadProfiles() {
   );
 }
 export function Research() {
-  const { settings } = useLab(),
-    d = useScope();
-  const pts = points(d, undefined, true);
-  const [key, setKey] = useState(""),
-    [outcome, setOutcome] = useState("reps"),
+  const { settings } = useLab();
+  const { d, pts, active, choose } = useDensitySelection();
+  const [outcome, setOutcome] = useState("reps"),
     [threshold, setThreshold] = useState("2");
-  const keys = Array.from(new Set(pts.map((x) => fixedLoadKey(x.p, d))));
-  const active = keys.includes(key) ? key : keys.at(-1) || "";
+  const keys = Array.from(
+    new Set(
+      pts.filter((x) => x.p.loadKg !== null).map((x) => fixedLoadKey(x.p, d)),
+    ),
+  );
   const rows = pts.filter((x) => fixedLoadKey(x.p, d) === active);
   const values = rows.map((x) =>
     outcome === "reps"
@@ -1076,8 +1106,11 @@ export function Research() {
           <select
             aria-label="Research protocol"
             value={active}
-            onChange={(e) => setKey(e.target.value)}
+            onChange={(e) => choose(e.target.value)}
           >
+            <option value="" disabled>
+              No matching protocol selected
+            </option>
             {keys.map((k) => {
               const x = pts.find((x) => fixedLoadKey(x.p, d) === k)!;
               return (

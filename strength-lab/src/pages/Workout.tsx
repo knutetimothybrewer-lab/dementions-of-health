@@ -1,3 +1,5 @@
+import { sessionDisplayName } from "../domain/scope";
+import { fixedLoadKey } from "../domain/metrics";
 import {
   ArrowRight,
   Check,
@@ -93,12 +95,24 @@ export function WorkoutEditor({
   performanceId?: string;
   append?: boolean;
 }) {
-  const { db, data, settings, notify, navigate } = useLab();
+  const {
+    db,
+    data,
+    settings,
+    notify,
+    navigate,
+    filters,
+    setFilters,
+    analysis,
+    setAnalysis,
+  } = useLab();
   const [draft, setDraft] = useState<Draft>({
     unit: settings.unit,
-    exercise: data.exercises[0]?.id || "",
+    exercise: data.exercises.some((e) => e.id === filters.exercise)
+      ? filters.exercise
+      : data.exercises[0]?.id || "",
     date: today(),
-    cycle: "",
+    cycle: data.cycles.some((c) => c.id === filters.cycle) ? filters.cycle : "",
     modality: "Density",
     mode: "summary",
     load: "",
@@ -302,6 +316,7 @@ export function WorkoutEditor({
     savingRef.current = true;
     if (timer.current) clearTimeout(timer.current);
     try {
+      let densityKey = "";
       const session = sessionSchema.parse({
         ...stamp(original?.id),
         createdAt: original?.createdAt || new Date().toISOString(),
@@ -422,6 +437,8 @@ export function WorkoutEditor({
             : null;
         const perf = performanceSchema.parse({
           ...stamp(pid),
+          createdAt: originalP?.createdAt || new Date().toISOString(),
+          revision: (originalP?.revision || 0) + 1,
           sessionId: session.id,
           protocolId: protocol.id,
           mode: draft.mode,
@@ -438,6 +455,14 @@ export function WorkoutEditor({
             ? toKg(Number(draft.bodyMass), settings.unit)
             : null,
         });
+        if (draft.modality === "Density" && perf.loadKg !== null)
+          densityKey = fixedLoadKey(perf, {
+            ...data,
+            protocols: [
+              ...data.protocols.filter((p) => p.id !== protocol.id),
+              protocol,
+            ],
+          });
         await saveSession(
           db,
           {
@@ -452,6 +477,20 @@ export function WorkoutEditor({
         );
       }
       await db.drafts.delete(draftKey);
+      setFilters({
+        ...filters,
+        exercise:
+          draft.kind === "resistance" &&
+          (filters.exercise || (originalP && !append))
+            ? draft.exercise
+            : "",
+        pattern: "",
+        modality: "",
+        cycle: draft.cycle,
+        from: filters.from && draft.date < filters.from ? "" : filters.from,
+        to: filters.to && draft.date > filters.to ? "" : filters.to,
+      });
+      setAnalysis({ ...analysis, densityKey });
       notify("Workout saved. Your observations are ready to analyze.");
       navigate("history");
     } catch (err) {
@@ -972,7 +1011,7 @@ export function WorkoutEditor({
   );
 }
 export function History() {
-  const { db, settings, navigate, notify } = useLab(),
+  const { db, data, settings, navigate, notify } = useLab(),
     d = useScope();
   const [selected, setSelected] = useState("");
   const sessions = [...d.sessions].sort((a, b) => b.date.localeCompare(a.date));
@@ -1010,7 +1049,7 @@ export function History() {
                 sessions.map((s) => ({
                   id: s.id,
                   date: s.date,
-                  name: s.name,
+                  name: sessionDisplayName(data, s),
                   duration_min: s.durationSec / 60,
                   cycle: s.cycleId,
                   rpe: s.rpe,
@@ -1053,7 +1092,7 @@ export function History() {
                           className="table-link"
                           onClick={() => setSelected(s.id)}
                         >
-                          {s.name}
+                          {sessionDisplayName(data, s)}
                         </button>
                       </td>
                       <td>
@@ -1078,14 +1117,14 @@ export function History() {
                       <td>
                         <button
                           className="icon-button"
-                          aria-label={"Edit " + s.name}
+                          aria-label={"Edit " + sessionDisplayName(data, s)}
                           onClick={() => navigate("log?id=" + s.id)}
                         >
                           <Pencil size={15} />
                         </button>
                         <button
                           className="icon-button danger"
-                          aria-label={"Delete " + s.name}
+                          aria-label={"Delete " + sessionDisplayName(data, s)}
                           onClick={() => remove(s.id)}
                         >
                           <Trash2 size={15} />
@@ -1104,7 +1143,7 @@ export function History() {
       {active && (
         <Card>
           <SectionTitle
-            title={active.name}
+            title={sessionDisplayName(data, active)}
             subtitle={`${active.date} · ${active.timeZone}`}
             action={
               <button

@@ -1,3 +1,4 @@
+import { scopeDataset } from "../domain/scope";
 import { ArrowRight, Plus } from "lucide-react";
 import { useState } from "react";
 import Chart, { lineOption } from "../components/Chart";
@@ -34,10 +35,11 @@ import {
 } from "../domain/model";
 
 export function Cycles() {
-  const { db, data, settings, notify, navigate } = useLab();
+  const { db, data, settings, notify, navigate, filters, setFilters } =
+    useLab();
+  const scoped = useScope();
   const [creating, setCreating] = useState(false),
     [error, setError] = useState(""),
-    [cycleId, setCycleId] = useState(""),
     [compareId, setCompareId] = useState("");
   const [form, setForm] = useState({
     name: "",
@@ -55,16 +57,16 @@ export function Cycles() {
     minutes: "15",
   });
   const current =
-    data.cycles.find((c) => c.id === cycleId) ||
+    data.cycles.find((c) => c.id === filters.cycle) ||
     data.cycles.find((c) => c.start <= today() && c.end >= today()) ||
     data.cycles[0];
   const compare =
     data.cycles.find((c) => c.id === compareId) ||
     data.cycles.find((c) => c.id !== current?.id);
-  const plans = data.plans.filter((p) => p.cycleId === current?.id),
+  const plans = scoped.plans.filter((p) => p.cycleId === current?.id),
     due = plans.filter((p) => p.date <= today()),
     complete = due.filter((p) => p.sessionId !== null).length;
-  const sessions = data.sessions.filter((s) => s.cycleId === current?.id);
+  const sessions = scoped.sessions.filter((s) => s.cycleId === current?.id);
   const wk = current ? cycleWeek(today(), current.start) : 0;
   async function create(e: React.FormEvent) {
     e.preventDefault();
@@ -80,7 +82,7 @@ export function Cycles() {
         deloadWeeks: form.deload.split(",").filter(Boolean).map(Number),
       });
       await db.cycles.add(c);
-      setCycleId(c.id);
+      setFilters({ ...filters, cycle: c.id });
       setCreating(false);
       notify("Training cycle created.");
     } catch (err) {
@@ -115,13 +117,7 @@ export function Cycles() {
   }
   function summary(c: Cycle | undefined) {
     if (!c) return null;
-    const scoped = {
-      ...data,
-      sessions: data.sessions.filter((s) => s.cycleId === c.id),
-      performances: data.performances.filter((p) =>
-        data.sessions.some((s) => s.id === p.sessionId && s.cycleId === c.id),
-      ),
-    };
+    const scoped = scopeDataset(data, { ...filters, cycle: c.id });
     const pts = points(scoped);
     const v = pts.reduce((s, p) => s + (p.volume ?? 0), 0),
       weeks = (dayNumber(c.end) - dayNumber(c.start) + 1) / 7;
@@ -142,7 +138,7 @@ export function Cycles() {
         <select
           aria-label="Active training cycle"
           value={current?.id || ""}
-          onChange={(e) => setCycleId(e.target.value)}
+          onChange={(e) => setFilters({ ...filters, cycle: e.target.value })}
         >
           {data.cycles.map((c) => (
             <option key={c.id} value={c.id}>

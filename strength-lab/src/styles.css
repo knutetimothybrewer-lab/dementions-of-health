@@ -2031,3 +2031,31 @@ tbody tr:last-child th {
   font-size: 12px;
   margin-bottom: 15px;
 }
+.analysis-scope {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  margin-bottom: 22px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel);
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.analysis-scope strong {
+  color: var(--text);
+  font-weight: 500;
+}
+.analysis-scope .text-button {
+  font-size: 10px;
+}
+.analysis-scope small {
+  display: block;
+  font-size: 10px;
+  margin-top: 5px;
+  color: var(--muted);
+}
