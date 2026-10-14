@@ -22,3 +22,7 @@ The first account to sign in against an empty org becomes its admin.
 4. Drop your logo at `assets/logo.png` (optional; a placeholder wordmark is used otherwise).
 
 See [CLAUDE.md](CLAUDE.md) for architecture and conventions and [docs/decisions.md](docs/decisions.md) for design decisions.
+
+## Strength Lab
+
+The standalone personal analytics PWA is in [`strength-lab/`](strength-lab/README.md). It uses React/TypeScript, IndexedDB, isolated demonstration data, and offline backups; its setup and GitHub Pages instructions are documented there. The existing Top Tier tracker remains separate.
