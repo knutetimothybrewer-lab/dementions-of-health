@@ -666,7 +666,7 @@ export function StrengthAnalytics() {
   const { settings, filters, setFilters, analysis, setAnalysis } = useLab();
   const d = useScope({ exercise: "" });
   const formula = analysis.formula;
-  const eligibleIds = Array.from(new Set(points(d).map((p) => p.e.id)));
+  const eligibleIds = d.exercises.map((e) => e.id);
   const active =
     filters.exercise ||
     strengthObservations(d, formula).at(-1)?.pt.e.id ||
@@ -701,6 +701,9 @@ export function StrengthAnalytics() {
               setFilters({ ...filters, exercise: e.target.value })
             }
           >
+            <option value="" disabled>
+              Select an exercise
+            </option>
             {eligibleIds.map((id) => (
               <option key={id} value={id}>
                 {d.exercises.find((e) => e.id === id)?.name}

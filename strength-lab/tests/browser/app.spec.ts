@@ -358,3 +358,22 @@ test("chosen cycle and 1RM equation carry into overview and survive reload", asy
     page.getByRole("region", { name: "Analysis scope" }),
   ).toContainText("Brzycki");
 });
+test("an exercise with no qualifying records stays selected and shows no borrowed estimate", async ({
+  page,
+}) => {
+  await page.goto("/#/strength");
+  await page
+    .getByRole("combobox", { name: "Strength exercise" })
+    .selectOption("deadlift");
+  await expect(
+    page
+      .getByRole("combobox", { name: "Strength exercise" })
+      .locator("option:checked"),
+  ).toHaveText("Conventional deadlift");
+  await expect(page.locator(".metric").first()).toContainText("—");
+  await page.goto("/#/dashboard");
+  await expect(
+    page.getByRole("region", { name: "Analysis scope" }),
+  ).toContainText("Conventional deadlift");
+  await expect(page.locator(".strength-readout")).toContainText("—");
+});
