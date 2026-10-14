@@ -14,8 +14,8 @@ export default defineConfig({
         name: "Strength Lab",
         short_name: "Strength Lab",
         description: "Performance. Measured.",
-        theme_color: "#101820",
-        background_color: "#101820",
+        theme_color: "#1f3a63",
+        background_color: "#1f3a63",
         display: "standalone",
         start_url: "./",
         icons: [

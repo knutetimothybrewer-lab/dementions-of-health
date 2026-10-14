@@ -25,24 +25,44 @@ export default function Chart({
       if (disposed || !ref.current) return;
       const chart = lib.init(ref.current);
       instance.current = chart;
+      const recolor = (value: unknown): unknown => {
+        const colors: Record<string, string> = {
+          "#8796a6": settings.theme === "dark" ? "#b1bac6" : "#536174",
+          "#33414f": settings.theme === "dark" ? "#354865" : "#c8cdc6",
+          "#8796a61c": settings.theme === "dark" ? "#b1bac626" : "#53617426",
+          "#659df7": settings.theme === "dark" ? "#8fa6c6" : "#1f3a63",
+          "#78d9c5": "#d8ddd6",
+          "#263746": "#1f3a63",
+        };
+        if (typeof value === "string") return colors[value] || value;
+        if (Array.isArray(value)) return value.map(recolor);
+        if (value && typeof value === "object")
+          return Object.fromEntries(
+            Object.entries(value).map(([key, item]) => [key, recolor(item)]),
+          );
+        return value;
+      };
       chart.setOption({
         backgroundColor: "transparent",
-        color: ["#78d9c5", "#6399f8", "#d6ad70", "#b79bde"],
+        color:
+          settings.theme === "dark"
+            ? ["#d8ddd6", "#8fa6c6", "#b1bac6", "#ffffff"]
+            : ["#1f3a63", "#657b99", "#90998c", "#384454"],
         textStyle: {
           fontFamily: "Arial",
-          color: settings.theme === "dark" ? "#8796a6" : "#61707b",
+          color: settings.theme === "dark" ? "#b1bac6" : "#536174",
         },
         animation: !matchMedia("(prefers-reduced-motion: reduce)").matches,
         grid: { left: 56, right: 22, top: 35, bottom: 42 },
         tooltip: {
           trigger: "axis",
-          backgroundColor: settings.theme === "dark" ? "#18232e" : "#ffffff",
-          borderColor: "#425568",
+          backgroundColor: settings.theme === "dark" ? "#213451" : "#ffffff",
+          borderColor: "#6e829f",
           textStyle: {
-            color: settings.theme === "dark" ? "#edf2f6" : "#18232e",
+            color: settings.theme === "dark" ? "#f5f5f0" : "#1f3a63",
           },
         },
-        ...option,
+        ...(recolor(option) as EChartsOption),
       });
       observer = new ResizeObserver(() => chart.resize());
       observer.observe(ref.current);
@@ -80,7 +100,7 @@ export default function Chart({
               type: "png",
               pixelRatio: 2,
               backgroundColor:
-                settings.theme === "dark" ? "#141f2a" : "#ffffff",
+                settings.theme === "dark" ? "#18263d" : "#ffffff",
             });
             if (url) {
               const a = document.createElement("a");
