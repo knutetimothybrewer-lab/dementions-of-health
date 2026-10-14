@@ -1,0 +1,47 @@
+name: Strength Lab Pages
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/strength-lab]
+    paths: ['strength-lab/**', '.github/workflows/strength-lab-pages.yml']
+  pull_request:
+    paths: ['strength-lab/**', '.github/workflows/strength-lab-pages.yml']
+permissions:
+  contents: read
+concurrency:
+  group: strength-lab-pages
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: strength-lab
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: strength-lab/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+        env:
+          VITE_BASE_PATH: /dementions-of-health/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: strength-lab/dist
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deployment
