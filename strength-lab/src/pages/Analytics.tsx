@@ -173,12 +173,18 @@ export function Dashboard() {
           </span>
           <div>
             <Badge tone="teal">
-              {currentCycle ? "BLOCK IN PROGRESS" : "READY WHEN YOU ARE"}
+              {currentCycle
+                ? today() > currentCycle.end
+                  ? "COMPLETED BLOCK"
+                  : today() < currentCycle.start
+                    ? "UPCOMING BLOCK"
+                    : "BLOCK IN PROGRESS"
+                : "READY WHEN YOU ARE"}
             </Badge>
             <h3>{currentCycle?.name || "Your next chapter"}</h3>
             <p>
               {currentCycle
-                ? `Week ${cycleWeek(today(), currentCycle.start)} · ${currentCycle.goal}`
+                ? `${today() > currentCycle.end ? "Completed" : today() < currentCycle.start ? "Upcoming" : `Week ${cycleWeek(today(), currentCycle.start)}`} · ${currentCycle.goal}`
                 : "Start with a session. Build your baseline."}
             </p>
             <button
@@ -327,7 +333,7 @@ export function Dashboard() {
                   </strong>
                 </div>
                 <div>
-                  <span>Historical best</span>
+                  <span>Best in selected scope</span>
                   <strong>
                     {Math.max(...matched.map((x) => x.reps))}
                     <small> reps</small>

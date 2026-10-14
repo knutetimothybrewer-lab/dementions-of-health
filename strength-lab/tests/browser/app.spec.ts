@@ -337,6 +337,7 @@ test("chosen cycle and 1RM equation carry into overview and survive reload", asy
   await expect(page.locator(".hero-readout")).toContainText(
     "Strength / Foundation",
   );
+  await expect(page.locator(".hero-readout")).toContainText("COMPLETED BLOCK");
   await page.getByRole("button", { name: "Clear selections" }).click();
   await page.goto("/#/strength");
   await page
