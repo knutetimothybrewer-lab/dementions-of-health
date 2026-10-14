@@ -2,11 +2,11 @@
   "application": "Strength Lab",
   "sourceRepository": "knutetimothybrewer-lab/dementions-of-health",
   "sourceBranch": "codex/strength-lab",
-  "sourceCommit": "156cd2edd21a800b4b05557f886ae96f068694eb",
+  "sourceCommit": "ed113a2254acd2dff1c0b02741c61c2c4fcc59d2",
   "basePath": "/dementions-of-health/",
   "validation": {
-    "mathematicalAndStorageTests": 23,
-    "browserTests": 11,
+    "mathematicalAndStorageTests": 28,
+    "browserTests": 16,
     "repositoryTests": 39,
     "repositorySubpathAndOfflineReload": "passed"
   },
@@ -14,5 +14,6 @@
     "navy": "#1f3a63",
     "silver": "#d8ddd6",
     "white": "#ffffff"
-  }
+  },
+  "release": "Shared analytics scope and corrected exercise edits"
 }
