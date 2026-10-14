@@ -1,12 +1,12 @@
+import { toKg } from "../domain/metrics";
 import {
-  stamp,
+  type Dataset,
+  dayNumber,
   emptyDataset,
   type Exercise,
-  type Dataset,
+  stamp,
   today,
-  dayNumber,
 } from "../domain/model";
-import { toKg } from "../domain/metrics";
 export function exerciseLibrary(): Exercise[] {
   return [
     [

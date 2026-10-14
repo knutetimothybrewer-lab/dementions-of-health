@@ -1,14 +1,14 @@
 import "fake-indexeddb/auto";
-import { it, expect, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, expect, it } from "vitest";
 import {
   LabDB,
-  initialize,
-  snapshot,
   backup,
+  deleteSession,
+  initialize,
   parseBackup,
   restore,
   saveSession,
-  deleteSession,
+  snapshot,
 } from "../src/data/db";
 import { demoData } from "../src/data/demo";
 let db: LabDB;

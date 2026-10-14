@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react";
-import { type Dataset, type Settings } from "../domain/model";
 import { type LabDB } from "../data/db";
+import { type Dataset, type Settings } from "../domain/model";
 export type Filters = {
   exercise: string;
   cycle: string;

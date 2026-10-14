@@ -1,36 +1,29 @@
-import { useEffect, useRef, useState } from "react";
 import {
-  Plus,
-  Trash2,
-  Save,
-  ChevronDown,
   ArrowRight,
   Check,
+  ChevronDown,
   Download,
   Pencil,
+  Plus,
+  Save,
+  Trash2,
 } from "lucide-react";
-import { useLab, useScope, number, dateLabel } from "../components/context";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { dateLabel, number, useLab, useScope } from "../components/context";
+import { Badge, Card, Empty, Field, SectionTitle } from "../components/ui";
+import { csv, deleteSession, download, saveSession } from "../data/db";
+import { fromKg, points, toKg } from "../domain/metrics";
 import {
-  Badge,
-  Card,
-  Empty,
-  Field,
-  SectionTitle,
-  Help,
-} from "../components/ui";
-import {
-  type SetRecord,
   type Modality,
+  type SetRecord,
+  conditioningSchema,
   modalities,
+  performanceSchema,
+  sessionSchema,
+  setSchema,
   stamp,
   today,
-  sessionSchema,
-  performanceSchema,
-  setSchema,
-  conditioningSchema,
 } from "../domain/model";
-import { toKg, fromKg, points, pace } from "../domain/metrics";
-import { saveSession, deleteSession, csv, download } from "../data/db";
 
 type SetInput = {
   load: string;
@@ -136,8 +129,10 @@ export function WorkoutEditor({
     timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestDraft = useRef(draft),
     readyRef = useRef(false);
-  latestDraft.current = draft;
-  readyRef.current = ready;
+  useLayoutEffect(() => {
+    latestDraft.current = draft;
+    readyRef.current = ready;
+  }, [draft, ready]);
   const original = data.sessions.find((s) => s.id === sessionId),
     originalP = append
       ? undefined
@@ -149,9 +144,20 @@ export function WorkoutEditor({
     originalC = append
       ? undefined
       : data.conditioning.find((c) => c.sessionId === sessionId);
+  const initialContext = useRef({
+    original,
+    originalP,
+    originalC,
+    protocols: data.protocols,
+    sets: data.sets,
+    unit: settings.unit,
+  });
   useEffect(() => {
     let cancelled = false;
-    setReady(false);
+    const { original, originalP, originalC, protocols, sets, unit } =
+      initialContext.current;
+    const data = { protocols, sets };
+    const settings = { unit };
     db.drafts
       .get(draftKey)
       .then((saved) => {
@@ -250,7 +256,7 @@ export function WorkoutEditor({
       cancelled = true;
       if (timer.current) clearTimeout(timer.current);
     };
-  }, [db, sessionId, append]);
+  }, [db, draftKey]);
   useEffect(
     () => () => {
       if (readyRef.current && !savingRef.current) {
@@ -285,18 +291,6 @@ export function WorkoutEditor({
       if (timer.current) clearTimeout(timer.current);
     };
   }, [draft, ready, db, draftKey]);
-  useEffect(() => {
-    if (!ready || draft.unit === settings.unit) return;
-    const convert = (v: string) =>
-      v ? String(fromKg(toKg(Number(v), draft.unit), settings.unit)) : v;
-    setDraft((v) => ({
-      ...v,
-      unit: settings.unit,
-      load: convert(v.load),
-      bodyMass: convert(v.bodyMass),
-      sets: v.sets.map((s) => ({ ...s, load: convert(s.load) })),
-    }));
-  }, [ready, settings.unit, draft.unit]);
   const update = <K extends keyof Draft>(key: K, value: Draft[K]) =>
     setDraft((d) => ({ ...d, [key]: value }));
   const ex = data.exercises.find((e) => e.id === draft.exercise);

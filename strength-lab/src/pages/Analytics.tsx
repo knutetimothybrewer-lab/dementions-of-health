@@ -1,13 +1,14 @@
-import { useMemo, useState } from "react";
 import {
+  Activity,
   ArrowRight,
   ArrowUpRight,
   CheckCircle2,
-  Activity,
-  Target,
   Clock3,
+  Target,
 } from "lucide-react";
-import { useLab, useScope, number, dateLabel } from "../components/context";
+import { useState } from "react";
+import Chart, { lineOption } from "../components/Chart";
+import { dateLabel, number, useLab, useScope } from "../components/context";
 import {
   Badge,
   Card,
@@ -16,25 +17,23 @@ import {
   Metric,
   SectionTitle,
 } from "../components/ui";
-import Chart, { lineOption } from "../components/Chart";
 import {
-  points,
   change,
-  fromKg,
-  toKg,
-  fixedLoadKey,
   comparisonKey,
-  e1rm,
-  qualifying,
-  normalizedLoad,
-  rolling,
-  movingMedian,
-  linearTrend,
-  stats,
-  matchedInsight,
   correlation,
   cycleWeek,
-  sessionLoad,
+  e1rm,
+  fixedLoadKey,
+  fromKg,
+  linearTrend,
+  matchedInsight,
+  movingMedian,
+  normalizedLoad,
+  points,
+  qualifying,
+  rolling,
+  stats,
+  toKg,
 } from "../domain/metrics";
 import { dayNumber, today, type Dataset } from "../domain/model";
 
@@ -441,10 +440,11 @@ export function DensityLab() {
         .sort((a, b) => a.order - b.order)
     : [];
   const timed = detail.filter((s) => s.endSec !== null);
-  let cumulative = 0;
-  const accumulation = timed.map((s) => ({
+  const accumulation = timed.map((s, i) => ({
     time_min: s.endSec! / 60,
-    cumulative_reps: (cumulative += s.reps),
+    cumulative_reps: timed
+      .slice(0, i + 1)
+      .reduce((total, row) => total + row.reps, 0),
   }));
   return (
     <>

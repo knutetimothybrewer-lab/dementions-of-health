@@ -1,5 +1,5 @@
-import { test, expect } from "@playwright/test";
-async function startPersonal(page: import("@playwright/test").Page) {
+import { expect, test, type Page } from "@playwright/test";
+async function startPersonal(page: Page) {
   await page.goto("/");
   await page.getByRole("button", { name: "Start my training history" }).click();
   await expect(

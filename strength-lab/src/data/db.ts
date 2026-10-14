@@ -1,19 +1,19 @@
 import Dexie, { type Table } from "dexie";
 import {
+  type Conditioning,
+  type Cycle,
   type Dataset,
   type Exercise,
+  type Performance,
+  type Plan,
   type Protocol,
   type Session,
-  type Performance,
   type SetRecord,
-  type Cycle,
-  type Plan,
-  type Conditioning,
-  type Wellness,
   type Settings,
+  type Wellness,
   databaseSchema,
-  stamp,
   emptyDataset,
+  stamp,
   validateReferences,
 } from "../domain/model";
 import { demoData, exerciseLibrary } from "./demo";

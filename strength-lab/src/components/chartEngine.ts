@@ -1,18 +1,18 @@
-import { init, use } from "echarts/core";
 import {
-  LineChart,
   BarChart,
-  ScatterChart,
   HeatmapChart,
+  LineChart,
+  ScatterChart,
 } from "echarts/charts";
 import {
   GridComponent,
-  TooltipComponent,
   LegendComponent,
+  TooltipComponent,
   VisualMapComponent,
 } from "echarts/components";
+import { init, use as registerCharts } from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
-use([
+registerCharts([
   LineChart,
   BarChart,
   ScatterChart,

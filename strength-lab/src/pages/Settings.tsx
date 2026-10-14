@@ -1,33 +1,24 @@
-import { useState, useRef } from "react";
-import {
-  Download,
-  Upload,
-  ShieldCheck,
-  Database,
-  Plus,
-  Check,
-  AlertCircle,
-} from "lucide-react";
-import { useLab, number } from "../components/context";
+import { Download, Plus, ShieldCheck, Upload } from "lucide-react";
+import { useRef, useState } from "react";
+import { number, useLab } from "../components/context";
 import {
   Badge,
   Card,
   Field,
-  SectionTitle,
   Methodology,
-  Help,
+  SectionTitle,
 } from "../components/ui";
-import { type Dataset, type Exercise, today } from "../domain/model";
 import {
+  addExercise,
   backup,
+  csv,
+  download,
   parseBackup,
   restore,
-  download,
-  csv,
-  addExercise,
 } from "../data/db";
-import { WellnessPanel } from "./Labs";
 import { fromKg } from "../domain/metrics";
+import { type Dataset, type Exercise, today } from "../domain/model";
+import { WellnessPanel } from "./Labs";
 export function SettingsPage() {
   const { db, data, settings, demo, setDemo, notify } = useLab();
   const [error, setError] = useState(""),

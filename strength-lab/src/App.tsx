@@ -1,49 +1,47 @@
-import { Component, type ReactNode, useEffect, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { useRegisterSW } from "virtual:pwa-register/react";
 import {
   Activity,
-  LayoutDashboard,
-  Plus,
+  ArrowRight,
+  Beaker,
+  CalendarDays,
+  ChartNoAxesCombined,
+  ChevronDown,
+  FlaskConical,
+  HeartPulse,
   History,
+  LayoutDashboard,
+  Menu,
+  Plus,
+  ScanLine,
+  Settings,
   Timer,
   TrendingUp,
-  ChartNoAxesCombined,
-  HeartPulse,
-  CalendarDays,
-  FlaskConical,
-  ScanLine,
   Trophy,
-  Settings,
-  ArrowUpRight,
-  ChevronDown,
-  Menu,
   Wifi,
   WifiOff,
   X,
-  ArrowRight,
-  Beaker,
 } from "lucide-react";
+import { Component, type ReactNode, useEffect, useState } from "react";
+import { useRegisterSW } from "virtual:pwa-register/react";
 import { Context, type Filters } from "./components/context";
-import { realDB, demoDB, initialize, snapshot } from "./data/db";
+import { demoDB, initialize, realDB, snapshot, type LabDB } from "./data/db";
 import { type Settings as Preference, modalities } from "./domain/model";
 import {
   Dashboard,
   DensityLab,
-  StrengthAnalytics,
   LoadProfiles,
-  Research,
   Records,
+  Research,
+  StrengthAnalytics,
 } from "./pages/Analytics";
-import { WorkoutEditor, History as HistoryPage } from "./pages/Workout";
 import {
-  Cycles,
   Biomechanics,
   ConditioningPage,
+  Cycles,
   WellnessPanel,
 } from "./pages/Labs";
 import { SettingsPage } from "./pages/Settings";
-import { Badge } from "./components/ui";
+import { History as HistoryPage, WorkoutEditor } from "./pages/Workout";
 const nav = [
   ["dashboard", "Overview", LayoutDashboard, "Your training, in perspective."],
   ["log", "Log workout", Plus, "Record the work. Keep the context."],
@@ -123,7 +121,7 @@ export default function App() {
     [demo, setDemoState] = useState(
       () => sessionStorage.getItem("strength-lab-environment") !== "personal",
     ),
-    [ready, setReady] = useState(false),
+    [readyDb, setReadyDb] = useState<LabDB | null>(null),
     [initError, setInitError] = useState(""),
     [menu, setMenu] = useState(false),
     [toast, setToast] = useState(""),
@@ -136,9 +134,9 @@ export default function App() {
     }),
     [showFilters, setShowFilters] = useState(false);
   const db = demo ? demoDB : realDB;
+  const ready = readyDb === db;
   const {
     needRefresh: [refresh, setRefresh],
-    offlineReady: [offlineReady],
     updateServiceWorker,
   } = useRegisterSW();
   useEffect(() => {
@@ -152,10 +150,9 @@ export default function App() {
   }, []);
   useEffect(() => {
     let cancelled = false;
-    setReady(false);
     initialize(db, demo)
       .then(() => {
-        if (!cancelled) setReady(true);
+        if (!cancelled) setReadyDb(db);
       })
       .catch((e) => setInitError(String(e)));
     return () => {
@@ -233,7 +230,7 @@ export default function App() {
     case "log":
       content = (
         <WorkoutEditor
-          key={route + String(demo)}
+          key={route + String(demo) + settings.unit}
           sessionId={params.get("id") || ""}
           performanceId={params.get("performance") || ""}
           append={params.get("append") === "1"}

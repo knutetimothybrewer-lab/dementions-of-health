@@ -1,35 +1,31 @@
-import { describe, it, expect } from "vitest";
-import {
-  toKg,
-  fromKg,
-  volume,
-  density,
-  change,
-  e1rm,
-  biomechanics,
-  acceleration,
-  linearTrend,
-  rolling,
-  stats,
-  correlation,
-  performanceTotals,
-  fixedLoadKey,
-  comparisonKey,
-  adherence,
-  cycleWeek,
-  qualifying,
-  matchedInsight,
-  points,
-  pace,
-  speed,
-  sessionLoad,
-} from "../src/domain/metrics";
+import { describe, expect, it } from "vitest";
 import { demoData, exerciseLibrary } from "../src/data/demo";
 import {
-  databaseSchema,
-  validateReferences,
-  setSchema,
-} from "../src/domain/model";
+  acceleration,
+  adherence,
+  biomechanics,
+  change,
+  comparisonKey,
+  correlation,
+  cycleWeek,
+  density,
+  e1rm,
+  fixedLoadKey,
+  fromKg,
+  linearTrend,
+  matchedInsight,
+  pace,
+  performanceTotals,
+  points,
+  qualifying,
+  rolling,
+  sessionLoad,
+  speed,
+  stats,
+  toKg,
+  volume,
+} from "../src/domain/metrics";
+import { databaseSchema, validateReferences } from "../src/domain/model";
 describe("scientific calculations", () => {
   it("converts pounds without early rounding", () => {
     expect(toKg(185, "lb")).toBeCloseTo(83.91458845, 8);

@@ -1,6 +1,7 @@
+import { ArrowRight, Plus } from "lucide-react";
 import { useState } from "react";
-import { Plus, ArrowRight, CalendarDays, Check } from "lucide-react";
-import { useLab, useScope, number, dateLabel } from "../components/context";
+import Chart, { lineOption } from "../components/Chart";
+import { dateLabel, number, useLab, useScope } from "../components/context";
 import {
   Badge,
   Card,
@@ -10,29 +11,27 @@ import {
   Metric,
   SectionTitle,
 } from "../components/ui";
-import Chart, { lineOption } from "../components/Chart";
+import {
+  acceleration,
+  adherence,
+  biomechanics,
+  cycleWeek,
+  fromKg,
+  pace,
+  points,
+  sessionLoad,
+  speed,
+  toKg,
+} from "../domain/metrics";
 import {
   cycleSchema,
+  dayNumber,
   planSchema,
-  wellnessSchema,
   stamp,
   today,
-  dayNumber,
-  type Wellness,
+  wellnessSchema,
   type Cycle,
 } from "../domain/model";
-import {
-  adherence,
-  cycleWeek,
-  points,
-  fromKg,
-  toKg,
-  biomechanics,
-  acceleration,
-  pace,
-  speed,
-  sessionLoad,
-} from "../domain/metrics";
 
 export function Cycles() {
   const { db, data, settings, notify, navigate } = useLab();
@@ -676,8 +675,7 @@ export function Biomechanics() {
   );
 }
 export function ConditioningPage() {
-  const { settings, navigate } = useLab(),
-    d = useScope();
+  const d = useScope();
   const [activity, setActivity] = useState("Running"),
     [distance, setDistance] = useState("");
   const rows = d.conditioning

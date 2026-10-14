@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from "react";
-import type { EChartsOption, ECharts } from "echarts";
+import type { ECharts, EChartsOption } from "echarts";
 import { Download, Table2 } from "lucide-react";
-import { useLab } from "./context";
+import { useEffect, useRef, useState } from "react";
 import { csv, download } from "../data/db";
+import { useLab } from "./context";
 export default function Chart({
   option,
   rows,

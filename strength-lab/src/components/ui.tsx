@@ -1,5 +1,5 @@
-import { type ReactNode, useState, useEffect } from "react";
-import { ArrowUpRight, Info, X, ArrowRight, FlaskConical } from "lucide-react";
+import { ArrowRight, ArrowUpRight, FlaskConical, Info, X } from "lucide-react";
+import { type ReactNode, useEffect, useState } from "react";
 import { useLab } from "./context";
 export function Badge({
   children,
